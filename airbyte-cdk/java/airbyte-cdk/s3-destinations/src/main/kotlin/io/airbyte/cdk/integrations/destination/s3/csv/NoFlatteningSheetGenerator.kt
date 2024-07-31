@@ -32,7 +32,6 @@ class NoFlatteningSheetGenerator(
 
     /** When no flattening is needed, the record column is just one json blob. */
     override fun getRecordColumns(json: JsonNode): List<String> {
-        val tmp = Jsons.serialize(json)
-        return listOf(tmp)
+        return listOf(Jsons.serialize(json))
     }
 }
