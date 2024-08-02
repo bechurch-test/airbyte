@@ -374,7 +374,7 @@ class SnowflakeDestinationHandler(
     override fun gatherInitialState(
         streamConfigs: List<StreamConfig>
     ): List<DestinationInitialStatus<SnowflakeState>> {
-        val destinationStates = super.getAllDestinationStates()
+        val destinationStates = getAllDestinationStates()
 
         val streamIds = streamConfigs.map(StreamConfig::id).toList()
         val existingTables = findExistingTables(database, databaseName, streamIds)
@@ -485,6 +485,16 @@ class SnowflakeDestinationHandler(
 
     fun query(sql: String): List<JsonNode> {
         return database.queryJsons(sql)
+    }
+
+    override fun getDeleteStatesSql(destinationStates: Map<StreamId, SnowflakeState>): String {
+        if (Math.random() < 0.01) {
+            LOGGER.info("actually deleting states")
+            return super.getDeleteStatesSql(destinationStates)
+        } else {
+            LOGGER.info("skipping state deletion")
+            return "SELECT 1" // We still need to send a valid SQL query.
+        }
     }
 
     companion object {
