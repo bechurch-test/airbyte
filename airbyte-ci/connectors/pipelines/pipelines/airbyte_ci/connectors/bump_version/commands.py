@@ -3,14 +3,34 @@
 #
 
 import asyncclick as click
+import semver
 from pipelines.airbyte_ci.connectors.bump_version.pipeline import run_connector_version_bump_pipeline
 from pipelines.airbyte_ci.connectors.context import ConnectorContext
 from pipelines.airbyte_ci.connectors.pipeline import run_connectors_pipelines
 from pipelines.cli.dagger_pipeline_command import DaggerPipelineCommand
 
 
+class BumpType(click.ParamType):
+    name = "bump-type"
+
+    def __init__(self):
+        self.choices = ["patch", "minor", "major"]
+
+    def convert(self, value, param, ctx):
+        if value in self.choices:
+            return value
+        if value.startswith("version:"):
+            version_str = value.split("version:", 1)[1]
+            if semver.VersionInfo.is_valid(version_str):
+                return value
+        self.fail(f"{value} is not a valid bump type. Valid choices are {self.choices} or 'version:<semver>'.", param, ctx)
+
+    def __repr__(self):
+        return "BumpType"
+
+
 @click.command(cls=DaggerPipelineCommand, short_help="Bump a connector version and update its changelog.")
-@click.argument("bump-type", type=click.Choice(["patch", "minor", "major"]))
+@click.argument("bump-type", type=BumpType())
 @click.argument("changelog-entry", type=str)
 @click.option("--pr-number", type=int, help="Pull request number.")
 @click.pass_context
